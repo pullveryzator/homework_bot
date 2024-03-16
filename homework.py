@@ -156,7 +156,6 @@ def main():
             api_answer = get_api_answer(timestamp)
             timestamp = api_answer.get('current_date')
             homework = check_response(api_answer)
-            print(api_answer)
             if homework:
                 message = parse_status(homework[0])
                 send_message(bot, message)
