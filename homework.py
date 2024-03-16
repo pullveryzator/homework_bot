@@ -8,7 +8,6 @@ import requests
 import telegram
 from dotenv import load_dotenv
 from requests import RequestException
-from urllib3.exceptions import HTTPError
 
 from exceptions import AnswerTypeException, KeyErrorException
 
@@ -73,8 +72,8 @@ def send_message(bot, message):
     try:
         bot.send_message(TELEGRAM_CHAT_ID, message)
         logger.debug(f'Message {message} succefully sended.')
-    except HTTPError as error:
-        logger.error(f'Error during send message: {error}.')
+    except Exception as error:
+        logger.error(f'{error}')
 
 
 def get_api_answer(timestamp):
@@ -159,7 +158,6 @@ def main():
             if homework:
                 message = parse_status(homework[0])
                 send_message(bot, message)
-            time.sleep(RETRY_PERIOD)
 
         except AnswerTypeException as error:
             logger.error(f'{error}')
@@ -170,7 +168,7 @@ def main():
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
             logger.error(f'{error}')
-            break
+        time.sleep(RETRY_PERIOD)
 
 
 if __name__ == '__main__':
