@@ -9,3 +9,15 @@ class KeyErrorException(Exception):
     """Exception for keys in the "homework" dictionary."""
     def __init__(self, message):
         super.__init__(message)
+
+
+class UnexpectedFromDateException(Exception):
+    """Exception for unexpected 'from_date' parameter."""
+    def __init__(self, message):
+        super.__init__(message)
+
+
+class AccessDeniedException(Exception):
+    """Exception for invalid or incorrect tokens."""
+    def __init__(self, message):
+        super.__init__(message)
