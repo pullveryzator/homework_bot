@@ -12,10 +12,10 @@ from requests import RequestException
 from telegram import TelegramError
 
 from exceptions import (AccessDeniedException, AnswerTypeException,
-                        KeyErrorException, UnexpectedFromDateException)
+                        KeyErrorException, ServerAccessException,
+                        StatusErrorException, UnexpectedFromDateException)
 
 load_dotenv()
-
 
 PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
@@ -87,11 +87,13 @@ def get_api_answer(timestamp):
     payload = {'from_date': timestamp}
     try:
         homeworks = requests.get(ENDPOINT, headers=HEADERS, params=payload)
-    except RequestException:
-        pass
+    except RequestException as error:
+        raise ServerAccessException(
+            f'{REQUEST_ERROR_MESSAGE}error: {error}.')
     status_code = homeworks.status_code
-    if homeworks.status_code != HTTPStatus.OK:
-        raise RequestException(f'{REQUEST_ERROR_MESSAGE}{status_code}.')
+    if status_code != HTTPStatus.OK:
+        raise RequestException(
+            f'{REQUEST_ERROR_MESSAGE}status code: {status_code}.')
     return homeworks.json()
 
 
@@ -104,10 +106,10 @@ def check_response(response):
     cast to Python data types.
     """
     if not isinstance(response, dict):
-        raise AnswerTypeException(dict)
+        raise AnswerTypeException(response, dict)
     homework = response.get('homeworks')
     if not isinstance(homework, list):
-        raise AnswerTypeException(list)
+        raise AnswerTypeException(homework, list)
     if response.get('code') == 'UnknownError':
         error = response.get('error')
         raise UnexpectedFromDateException(error)
@@ -131,11 +133,10 @@ def parse_status(homework):
     """
     homework_name = homework.get('homework_name')
     if homework_name is None:
-        raise KeyErrorException(
-            'Missing "homework_name" key in homework list.')
+        raise KeyErrorException
     status = homework.get('status')
     if status not in HOMEWORK_VERDICTS or not status:
-        raise KeyErrorException(f'Unknown status: {status}')
+        raise StatusErrorException(status)
     verdict = HOMEWORK_VERDICTS.get(status)
     return f'Изменился статус проверки работы "{homework_name}". {verdict}'
 
@@ -150,12 +151,7 @@ def main():
     """
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     timestamp = int(time.time())
-
-    def send_and_log_error(error):
-        """Sending and logging error."""
-        message = f'Program failure: {error}'
-        logger.error(f'{error}')
-        send_message(bot, message)
+    old_err_message = ''
 
     while True:
         try:
@@ -166,17 +162,21 @@ def main():
             if homework:
                 message = parse_status(homework[0])
                 send_message(bot, message)
-
-        except AccessDeniedException as error:
-            send_and_log_error(error)
-        except AnswerTypeException as error:
-            send_and_log_error(error)
-        except KeyErrorException as error:
-            send_and_log_error(error)
-        except RequestException as error:
-            send_and_log_error(error)
-        except UnexpectedFromDateException as error:
-            send_and_log_error(error)
+        except (
+            AccessDeniedException,
+            AnswerTypeException,
+            KeyErrorException,
+            RequestException,
+            StatusErrorException,
+            ServerAccessException,
+            UnexpectedFromDateException,
+            Exception,
+        ) as error:
+            err_message = f'Program failure: {error}'
+            logger.error(f'{error}')
+            if old_err_message != err_message:
+                send_message(bot, err_message)
+            old_err_message = err_message
         time.sleep(RETRY_PERIOD)
 
 
