@@ -70,12 +70,16 @@ def send_message(bot, message):
     Sends a message to Telegram chat using the TELEGRAM_CHAT_ID
     environment variable. Accepts two input parameters:
     an instance of the Bot class and text with the message text.
+    Return True if sending is successfull, else: return False.
     """
     try:
         bot.send_message(TELEGRAM_CHAT_ID, message)
         logger.debug(f'Message <<{message}>> succefully sended.')
     except TelegramError as error:
         logger.error(f'{error}')
+        return False
+    else:
+        return True
 
 
 def get_api_answer(timestamp):
@@ -116,8 +120,7 @@ def check_response(response):
     elif response.get('code') == 'not_authenticated':
         error = response.get('message')
         raise AccessDeniedException(error)
-    else:
-        return homework
+    return homework
 
 
 def parse_status(homework):
@@ -175,8 +178,8 @@ def main():
             err_message = f'Program failure: {error}'
             logger.error(f'{error}')
             if old_err_message != err_message:
-                send_message(bot, err_message)
-            old_err_message = err_message
+                if send_message(bot, err_message):
+                    old_err_message = err_message
         time.sleep(RETRY_PERIOD)
 
 
