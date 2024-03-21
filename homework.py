@@ -78,8 +78,7 @@ def send_message(bot, message):
     except TelegramError as error:
         logger.error(f'{error}')
         return False
-    else:
-        return True
+    return True
 
 
 def get_api_answer(timestamp):
