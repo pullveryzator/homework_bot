@@ -19,6 +19,18 @@
 - **pytest==6.2.5**: Для тестирования кода.
 - **pytest-timeout==2.1.0**: Для ограничения времени выполнения тестов.
 
+## Структура проекта
+
+- homework_bot.py: Основной скрипт для запуска бота.
+- exceptions.py: Модуль с исключениями проекта.
+- tests/: Директория с тестами.
+- .env: Файл с переменными окружения (не добавляется в Git).
+- .gitignore: исключения Git.
+- pytest.ini: настройки тестов.
+- README.md: этот файл.
+- requirements.txt: зависимости проекта.
+- setup.cfg: настройки flake8.
+
 ## Установка и запуск
 
 1. **Клонируйте репозиторий**:
@@ -30,3 +42,55 @@
    python -m venv venv
    source venv/bin/activate  # Для Linux/MacOS
    venv\Scripts\activate     # Для Windows
+3. **Установите зависимости**:
+   ```bash
+   pip install -r requirements.txt
+4. **Создайте файл .env**:
+- В корне проекта создайте файл .env и добавьте в него следующие переменные:
+  ```bash
+  TELEGRAM_TOKEN=<ваш_токен_телеграм_бота>
+  TELEGRAM_CHAT_ID=<ваш_chat_id>
+
+- PRACTICUM_TOKEN: Токен для доступа к API Практикум.Домашка (см. ниже, как получить токен).
+
+- TELEGRAM_TOKEN: Токен вашего Telegram-бота (получите у BotFather).
+
+- TELEGRAM_CHAT_ID: Ваш ID в Telegram (можно узнать с помощью бота userinfobot).
+
+5. **Получите токен для API Практикум.Домашка**:
+
+- Перейдите по ссылке: https://oauth.yandex.ru/authorize?response_type=token&client_id=1d0b9dd4d652455a9eb710d450ff456a.
+
+- Авторизуйтесь в Яндекс.
+
+- Скопируйте токен из адресной строки браузера (он будет после access_token=).
+
+- Вставьте токен в файл .env в переменную PRACTICUM_TOKEN.
+
+6. **Запустите бота**:
+
+   ```bash
+   python homework_bot.py
+## API Практикум.Домашка
+- API Практикум.Домашка предоставляет один эндпоинт для отслеживания статуса домашней работы:
+
+- Эндпоинт: https://practicum.yandex.ru/api/user_api/homework_statuses/
+   - Метод: GET
+
+- Параметры:
+   - Authorization: Токен для доступа к API (передается в заголовке запроса).
+   - from_date: Опциональный параметр, указывающий дату, начиная с которой нужно получить статусы домашних работ (в формате Unix timestamp).
+### Пример ответа API:
+```json
+{
+  "homeworks": [
+    {
+      "id": 123,
+      "status": "approved",
+      "homework_name": "Homework 1",
+      "reviewer_comment": "Всё отлично!",
+      "date_updated": "2023-10-01T12:00:00Z"
+    }
+  ],
+  "current_date": 1696166400
+}
